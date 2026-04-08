@@ -29,6 +29,10 @@ public class Book {
         return borrowed;
     }
 
+    public String getBorrowedByMemberId() {
+        return borrowedByMemberId;
+    }
+
     public boolean isAvailable() {
         return !borrowed;
     }

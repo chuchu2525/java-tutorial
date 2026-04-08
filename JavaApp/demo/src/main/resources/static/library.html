@@ -123,6 +123,24 @@
 </div>
 
 <script>
+    const cache = {
+        books: new Map(),
+        members: new Map()
+    };
+
+    function escapeHTML(str) {
+        if (!str) return "";
+        return str.replace(/[&<>"']/g, function(m) {
+            return {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            }[m];
+        });
+    }
+
     async function fetchJson(url, options) {
         const response = await fetch(url, options);
         const data = await response.json();
@@ -135,7 +153,7 @@
 
         for (const item of items) {
             const li = document.createElement("li");
-            li.textContent = formatter(item);
+            li.innerHTML = formatter(item);
             list.appendChild(li);
         }
 
@@ -154,20 +172,38 @@
 
     async function loadBooks() {
         const { data } = await fetchJson("/api/library/books");
-        renderList("books", data, (book) =>
-            `${book.id}: ${book.title} / ${book.author} / 貸出中: ${book.borrowed}`);
+        cache.books.clear();
+        data.forEach(book => cache.books.set(book.id, book));
+
+        renderList("books", data, (book) => {
+            let status = book.borrowed ? `<span class="error">貸出中</span>` : `<span class="success">貸出可</span>`;
+            if (book.borrowed && book.borrowedByMemberId) {
+                const member = cache.members.get(book.borrowedByMemberId);
+                const memberName = member ? member.name : book.borrowedByMemberId;
+                status += ` (利用者: ${escapeHTML(memberName)})`;
+            }
+            return `ID: <code>${escapeHTML(book.id)}</code> | <strong>${escapeHTML(book.title)}</strong> (著者: ${escapeHTML(book.author)}) | ${status}`;
+        });
     }
 
     async function loadMembers() {
         const { data } = await fetchJson("/api/library/members");
+        cache.members.clear();
+        data.forEach(member => cache.members.set(member.id, member));
+
         renderList("members", data, (member) =>
-            `${member.id}: ${member.name} / 借りている冊数: ${member.borrowedBookCount}`);
+            `ID: <code>${escapeHTML(member.id)}</code> | 会員名: <strong>${escapeHTML(member.name)}</strong> | 借りている冊数: ${member.borrowedBookCount}`);
     }
 
     async function loadLoans() {
         const { data } = await fetchJson("/api/library/loans");
-        renderList("loans", data, (loan) =>
-            `${loan.memberId} -> ${loan.bookId} / ${loan.loanDate}`);
+        renderList("loans", data, (loan) => {
+            const member = cache.members.get(loan.memberId);
+            const book = cache.books.get(loan.bookId);
+            const memberName = member ? member.name : loan.memberId;
+            const bookTitle = book ? book.title : loan.bookId;
+            return `<strong>${escapeHTML(memberName)}</strong> &rarr; <strong>${escapeHTML(bookTitle)}</strong> <small>(${escapeHTML(loan.loanDate)})</small>`;
+        });
     }
 
     async function borrowBook() {
@@ -199,7 +235,9 @@
     }
 
     async function refreshAll() {
-        await Promise.all([loadBooks(), loadMembers(), loadLoans()]);
+        // 名前解決のために会員一覧を先に取得する
+        await loadMembers();
+        await Promise.all([loadBooks(), loadLoans()]);
     }
 
     refreshAll();
