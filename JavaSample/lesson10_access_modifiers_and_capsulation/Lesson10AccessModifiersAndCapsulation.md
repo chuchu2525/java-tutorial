@@ -7,6 +7,7 @@
 - アクセス修飾子
 - `private`
 - `public`
+- `protected`（概要）
 - カプセル化
 
 ## コードの概要
@@ -47,6 +48,13 @@ public void deposit(int amount) {
 ```
 
 ここでは、0以下の値は入金しないというルールを入れています。
+
+### 4. `protected` は「継承先から使える」修飾子
+
+- `protected` は、同じパッケージ内に加えて、サブクラス（子クラス）から参照できます
+- `private` はそのクラス内だけ、`public` はどこからでも参照できます
+
+この lesson では主に `private` と `public` でカプセル化を学び、`protected` の本格的な使い方は継承の lesson（`lesson11` 以降）で確認すると理解しやすいです。
 
 ## 実行するとどうなるか
 

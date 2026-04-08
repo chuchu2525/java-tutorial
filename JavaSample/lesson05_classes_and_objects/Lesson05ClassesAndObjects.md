@@ -51,6 +51,14 @@ person.introduce();
 
 オブジェクトごとに状態を持ち、その状態を使って振る舞います。
 
+### 4. `public class` と `class` の違い（軽く）
+
+- `public class` は他のパッケージからも参照できます
+- `class`（`public`なし）は同じパッケージ内からだけ参照できます（デフォルトアクセス）
+
+このサンプルでは `Lesson05ClassesAndObjects` は `public`、`Person` は `public` なしです。
+アクセス修飾子（`public` / `private` / `protected`）は後の lesson で詳しく学ぶ想定です。
+
 ## 実行するとどうなるか
 
 `私は Yuu、20歳です。` と表示されます。
