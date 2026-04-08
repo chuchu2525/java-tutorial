@@ -2,7 +2,7 @@ package JavaSample.lesson02_conditions;
 
 public class Lesson02Conditions {
     public static void main(String[] args) {
-        int score = 0;
+        int score = 75;
 
         if (score >= 80) {
             System.out.println("良い点です");
