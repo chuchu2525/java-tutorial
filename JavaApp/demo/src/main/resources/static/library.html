@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>図書貸出デモ</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 32px;
+            line-height: 1.5;
+            background: #f7f8fa;
+            color: #1f2937;
+        }
+
+        h1, h2 {
+            margin-bottom: 8px;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: #ffffff;
+            border: 1px solid #d1d5db;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        button {
+            background: #2563eb;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 14px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+        }
+
+        ul {
+            padding-left: 20px;
+        }
+
+        .message {
+            margin-top: 12px;
+            font-weight: bold;
+        }
+
+        .success {
+            color: #047857;
+        }
+
+        .error {
+            color: #b91c1c;
+        }
+
+        code {
+            background: #e5e7eb;
+            padding: 2px 6px;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+<body>
+<h1>図書貸出デモ</h1>
+<p>
+    この画面は Spring Boot の view として使う学習用ページです。
+    画面から API を呼び出して、貸出・返却と状態の変化を確認できます。
+</p>
+
+<div class="layout">
+    <section class="card">
+        <h2>本一覧</h2>
+        <button type="button" onclick="loadBooks()">本一覧を更新</button>
+        <ul id="books"></ul>
+    </section>
+
+    <section class="card">
+        <h2>会員一覧</h2>
+        <button type="button" onclick="loadMembers()">会員一覧を更新</button>
+        <ul id="members"></ul>
+    </section>
+
+    <section class="card">
+        <h2>貸出中一覧</h2>
+        <button type="button" onclick="loadLoans()">貸出中一覧を更新</button>
+        <ul id="loans"></ul>
+    </section>
+
+    <section class="card">
+        <h2>貸出</h2>
+        <p>例: <code>memberId = m1</code>, <code>bookId = b1</code></p>
+        <input id="borrowMemberId" placeholder="memberId">
+        <input id="borrowBookId" placeholder="bookId">
+        <button type="button" onclick="borrowBook()">貸出する</button>
+        <div id="borrowMessage" class="message"></div>
+    </section>
+
+    <section class="card">
+        <h2>返却</h2>
+        <p>例: <code>memberId = m1</code>, <code>bookId = b1</code></p>
+        <input id="returnMemberId" placeholder="memberId">
+        <input id="returnBookId" placeholder="bookId">
+        <button type="button" onclick="returnBook()">返却する</button>
+        <div id="returnMessage" class="message"></div>
+    </section>
+</div>
+
+<script>
+    async function fetchJson(url, options) {
+        const response = await fetch(url, options);
+        const data = await response.json();
+        return { ok: response.ok, data };
+    }
+
+    function renderList(elementId, items, formatter) {
+        const list = document.getElementById(elementId);
+        list.innerHTML = "";
+
+        for (const item of items) {
+            const li = document.createElement("li");
+            li.textContent = formatter(item);
+            list.appendChild(li);
+        }
+
+        if (items.length === 0) {
+            const li = document.createElement("li");
+            li.textContent = "データはありません";
+            list.appendChild(li);
+        }
+    }
+
+    function showMessage(elementId, ok, message) {
+        const element = document.getElementById(elementId);
+        element.textContent = message;
+        element.className = ok ? "message success" : "message error";
+    }
+
+    async function loadBooks() {
+        const { data } = await fetchJson("/api/library/books");
+        renderList("books", data, (book) =>
+            `${book.id}: ${book.title} / ${book.author} / 貸出中: ${book.borrowed}`);
+    }
+
+    async function loadMembers() {
+        const { data } = await fetchJson("/api/library/members");
+        renderList("members", data, (member) =>
+            `${member.id}: ${member.name} / 借りている冊数: ${member.borrowedBookCount}`);
+    }
+
+    async function loadLoans() {
+        const { data } = await fetchJson("/api/library/loans");
+        renderList("loans", data, (loan) =>
+            `${loan.memberId} -> ${loan.bookId} / ${loan.loanDate}`);
+    }
+
+    async function borrowBook() {
+        const memberId = document.getElementById("borrowMemberId").value;
+        const bookId = document.getElementById("borrowBookId").value;
+
+        const { ok, data } = await fetchJson("/api/library/loans", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ memberId, bookId })
+        });
+
+        showMessage("borrowMessage", ok, data.message);
+        await refreshAll();
+    }
+
+    async function returnBook() {
+        const memberId = document.getElementById("returnMemberId").value;
+        const bookId = document.getElementById("returnBookId").value;
+
+        const { ok, data } = await fetchJson("/api/library/returns", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ memberId, bookId })
+        });
+
+        showMessage("returnMessage", ok, data.message);
+        await refreshAll();
+    }
+
+    async function refreshAll() {
+        await Promise.all([loadBooks(), loadMembers(), loadLoans()]);
+    }
+
+    refreshAll();
+</script>
+</body>
+</html>
