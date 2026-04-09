@@ -5,6 +5,39 @@
 
 ---
 
+## 0. まず 5 分で動かす（読んでから触るより先に動かす）
+
+「説明は後でいいので、まず動く体験をしたい」人向けの最短手順です。
+
+前提（最低限）:
+
+- Java 17 以上が入っている
+- ターミナルで `JavaApp/demo` に移動できる
+
+手順:
+
+1. アプリ起動: `./mvnw spring-boot:run`
+2. 画面を開く: `http://localhost:8080/library`
+3. API確認（任意）: `http://localhost:8080/api/library/books`
+
+確認できれば OK:
+
+- 画面URLで一覧ページが開く
+- API URLで JSON が返る
+
+ここまでで覚えるのは 1 つだけ: **Spring Boot は「起動して URL にアクセスできる Web アプリ」を素早く作れる**。
+
+---
+
+## 0.5 最低限の用語ミニ辞典（最初はこれだけ）
+
+- **Bean**: Spring が管理しているオブジェクト（自分で `new` しないことが多い）
+- **DI（依存性注入）**: 必要な部品をコンストラクタ引数などで受け取る仕組み
+- **コンテナ**: Bean の生成・保持・配線を担当する Spring の入れ物
+- **PRG パターン**: POST の後に Redirect して、再送信を避ける定番手法
+
+---
+
 ## 1. まず結論: Spring Boot は何をしてくれるのか
 
 Spring Boot をひとことで言うと、**アプリ起動に必要なセットアップを自動化して、業務ロジック実装に集中させてくれる仕組み**です。
@@ -19,6 +52,8 @@ Spring Boot では次をフレームワークが担当します。
 - 組み込みサーバー（Tomcat）起動
 
 つまり、**「自分で全部配線する」から「役割を定義して任せる」**への考え方の変化が最初の壁です。
+
+ここまでで覚えるのは 1 つだけ: **Spring Boot は「配線作業」を減らして業務ロジックに集中させる**。
 
 ---
 
@@ -50,6 +85,8 @@ public class DemoApplication {
 - `@ComponentScan`
 
 初心者向けには「**このアノテーションが、Spring の自動設定スイッチ**」という理解で OK です。
+
+ここまでで覚えるのは 1 つだけ: **`SpringApplication.run` で、Bean の生成と Web 起動が始まる**。
 
 ---
 
@@ -98,6 +135,8 @@ public class LibraryService {
 - `new` は「作り方の責務」を持つ
 - 業務クラスは「業務ロジック」に集中したい
 - 生成・配線はコンテナ（Spring）に任せる方が全体が整理される
+
+ここまでで覚えるのは 1 つだけ: **「必要なものは引数で宣言、作るのは Spring」が DI の基本**。
 
 ---
 
@@ -169,6 +208,8 @@ flowchart LR
     C -->|JSON Response| U
 ```
 
+ここまでで覚えるのは 1 つだけ: **Controller は入口、Service は業務の中心、Repository はデータ担当**。
+
 ---
 
 ## 5. リクエストが処理される流れ（具体例）
@@ -184,6 +225,32 @@ flowchart LR
 7. Controller が `ResponseEntity` で `200` or `400` を返す
 
 ここで学べるのは「**HTTP の責務と業務ルールの責務を分ける**」という設計です。
+
+最小のリクエスト/レスポンス例:
+
+```json
+// Request: POST /api/library/loans
+{
+  "memberId": 1,
+  "bookId": 2
+}
+```
+
+```json
+// 成功時 Response (200)
+{
+  "success": true,
+  "message": "貸出しました"
+}
+```
+
+```json
+// 失敗時 Response (400)
+{
+  "success": false,
+  "message": "貸出上限を超えています"
+}
+```
 
 ### 5.2 画面から返却する (`POST /library/return`)
 
@@ -253,6 +320,8 @@ sequenceDiagram
     PageController-->>Browser: library.html (message表示)
 ```
 
+ここまでで覚えるのは 1 つだけ: **同じ Service を API と画面の両方が使う**。
+
 ---
 
 ## 6. Thymeleaf テンプレートの見方
@@ -269,6 +338,8 @@ sequenceDiagram
 
 たとえば「貸出可能/貸出中」バッジは、`book.borrowed` を見てクラスを切り替えています。  
 このように、**表示ロジックは View 側、業務判定は Service 側**に分かれています。
+
+ここまでで覚えるのは 1 つだけ: **Thymeleaf は「Model の値を画面に出す」担当**。
 
 ---
 
@@ -300,6 +371,8 @@ sequenceDiagram
 このアプリでは「同じ Service を API と MVC で共有」しています。  
 入口（Controller）が違うだけで、業務ロジックの核は同じです。
 
+ここまでで覚えるのは 1 つだけ: **アノテーションは最初は 5 つ覚えれば十分**。
+
 ---
 
 ## 8. `JavaSample` との対応関係
@@ -314,6 +387,8 @@ sequenceDiagram
 | 手作業で入出力 | DTO / Model / View に分離 |
 
 「難しくなった」のではなく、**役割分担が増えて現実のアプリに近づいた**と捉えると理解しやすいです。
+
+ここまでで覚えるのは 1 つだけ: **JavaSample の `main + new` を Spring が代わりに担当している**。
 
 ---
 
