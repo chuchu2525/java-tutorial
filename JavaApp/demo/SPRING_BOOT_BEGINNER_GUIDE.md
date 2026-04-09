@@ -145,6 +145,30 @@ Controller は「受け取り・返し方」を担当し、判定ロジックを
 - API と画面の両方から同じ業務ロジックを再利用できる
 - UI の変更が業務ロジックに波及しにくい
 
+### 4.4 レイヤー全体フロー図
+
+文章だけだと追いにくいので、全体の流れを 1 枚で見ると次のようになります。
+
+```mermaid
+flowchart LR
+    U[利用者 / ブラウザ / APIクライアント]
+    C[Controller<br/>LibraryController<br/>LibraryPageController]
+    S[Service<br/>LibraryService]
+    P[Policy<br/>LoanPolicy]
+    R[Repository<br/>LibraryRepository]
+    M[Model<br/>Book / Member / Loan]
+    V[View<br/>Thymeleaf library.html]
+
+    U -->|HTTP Request| C
+    C -->|業務処理を委譲| S
+    S -->|貸出可否判定| P
+    S -->|保存/取得| R
+    R -->|状態更新| M
+    C -->|Modelを詰めて描画| V
+    V -->|HTML Response| U
+    C -->|JSON Response| U
+```
+
 ---
 
 ## 5. リクエストが処理される流れ（具体例）
@@ -170,6 +194,64 @@ Controller は「受け取り・返し方」を担当し、判定ロジックを
 5. `redirect:/library` で再表示
 
 画面遷移では「POST の後にリダイレクト（PRG パターン）」を使っており、二重送信を避けやすくしています。
+
+### 5.3 シーケンス図（API 貸出）
+
+`POST /api/library/loans` の内部で何が呼ばれるかを時系列で表すと次の通りです。
+
+```mermaid
+sequenceDiagram
+    participant Client as API Client
+    participant Controller as LibraryController
+    participant Service as LibraryService
+    participant Policy as LoanPolicy
+    participant Repo as LibraryRepository
+    participant Book as Book
+    participant Member as Member
+
+    Client->>Controller: POST /api/library/loans (memberId, bookId)
+    Controller->>Service: borrowBook(memberId, bookId)
+    Service->>Repo: findMemberById(memberId)
+    Repo-->>Service: Member
+    Service->>Repo: findBookById(bookId)
+    Repo-->>Service: Book
+    Service->>Policy: validateBorrow(member, book)
+    Policy-->>Service: "OK" or エラーメッセージ
+
+    alt 判定OK
+        Service->>Book: borrow(memberId)
+        Service->>Member: borrowBook(bookId)
+        Service->>Repo: saveLoan(new Loan(...))
+        Service-->>Controller: ActionResponse(success=true)
+        Controller-->>Client: 200 OK + JSON
+    else 判定NG
+        Service-->>Controller: ActionResponse(success=false)
+        Controller-->>Client: 400 Bad Request + JSON
+    end
+```
+
+### 5.4 シーケンス図（画面返却）
+
+`POST /library/return` は「実行してから画面に戻る」流れです。
+
+```mermaid
+sequenceDiagram
+    participant Browser as Browser
+    participant PageController as LibraryPageController
+    participant Service as LibraryService
+    participant Repo as LibraryRepository
+    participant Redirect as RedirectAttributes
+
+    Browser->>PageController: POST /library/return (bookId)
+    PageController->>Service: returnBookByBookId(bookId)
+    Service->>Repo: findActiveLoanByBookId(bookId)
+    Repo-->>Service: activeLoan or null
+    Service-->>PageController: ActionResponse
+    PageController->>Redirect: addFlashAttribute(message, messageType)
+    PageController-->>Browser: redirect:/library
+    Browser->>PageController: GET /library
+    PageController-->>Browser: library.html (message表示)
+```
 
 ---
 
