@@ -29,4 +29,22 @@ class LibraryServiceTests {
         assertTrue(loanAfterReturn.isSuccess());
         assertEquals(2, libraryService.getActiveLoans().size());
     }
+
+    @Test
+    void addBookAndMemberAndReturnByBookIdWork() {
+        LibraryService libraryService = new LibraryService(new LibraryRepository(), new LoanPolicy());
+
+        ActionResponse addBookResponse = libraryService.addBook("DDD入門", "Kato");
+        ActionResponse addMemberResponse = libraryService.addMember("Haru");
+        ActionResponse borrowResponse = libraryService.borrowBook("m3", "b4");
+        ActionResponse returnResponse = libraryService.returnBookByBookId("b4");
+
+        assertTrue(addBookResponse.isSuccess());
+        assertTrue(addMemberResponse.isSuccess());
+        assertTrue(borrowResponse.isSuccess());
+        assertTrue(returnResponse.isSuccess());
+        assertEquals(0, libraryService.getActiveLoans().size());
+        assertEquals(4, libraryService.getBooks().size());
+        assertEquals(3, libraryService.getMembers().size());
+    }
 }

@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>図書貸出デモ</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 32px;
+            line-height: 1.5;
+            background: #f7f8fa;
+            color: #1f2937;
+        }
+
+        h1, h2 {
+            margin-bottom: 8px;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: #ffffff;
+            border: 1px solid #d1d5db;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+        }
+
+        th, td {
+            border-bottom: 1px solid #e5e7eb;
+            padding: 8px;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        th {
+            background: #f3f4f6;
+        }
+
+        input, select {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            background: #ffffff;
+        }
+
+        button {
+            background: #2563eb;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 14px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+
+        .success {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+
+        .status-available {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-borrowed {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .hint {
+            color: #4b5563;
+            font-size: 0.95rem;
+        }
+    </style>
+</head>
+<body>
+<h1>図書貸出デモ</h1>
+<p class="hint">
+    Spring Boot の MVC で一覧表示とフォーム送信を学ぶための画面です。
+    画面では誰が借りているかは出さず、本の状態だけが分かるようにしています。
+</p>
+
+<div th:if="${message}" class="message" th:classappend="' ' + ${messageType}" th:text="${message}"></div>
+
+<div class="layout">
+    <section class="card">
+        <h2>本一覧</h2>
+        <table>
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>タイトル</th>
+                <th>著者</th>
+                <th>ステータス</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="book : ${books}">
+                <td th:text="${book.id}"></td>
+                <td th:text="${book.title}"></td>
+                <td th:text="${book.author}"></td>
+                <td>
+                    <span class="status"
+                          th:classappend="${book.borrowed} ? ' status-borrowed' : ' status-available'"
+                          th:text="${book.statusLabel}"></span>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="card">
+        <h2>会員一覧</h2>
+        <table>
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>名前</th>
+                <th>借りている冊数</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="member : ${members}">
+                <td th:text="${member.id}"></td>
+                <td th:text="${member.name}"></td>
+                <td th:text="${member.borrowedBookCount}"></td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="card">
+        <h2>貸出中の本</h2>
+        <table>
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>タイトル</th>
+                <th>著者</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="book : ${borrowedBooks}">
+                <td th:text="${book.id}"></td>
+                <td th:text="${book.title}"></td>
+                <td th:text="${book.author}"></td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(borrowedBooks)}">
+                <td colspan="3">貸出中の本はありません</td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="card">
+        <h2>貸出</h2>
+        <form method="post" th:action="@{/library/borrow}">
+            <label for="memberId">会員</label>
+            <select id="memberId" name="memberId" required>
+                <option value="">選択してください</option>
+                <option th:each="member : ${members}"
+                        th:value="${member.id}"
+                        th:text="${member.id + ' / ' + member.name}"></option>
+            </select>
+
+            <label for="bookId">本</label>
+            <select id="bookId" name="bookId" required>
+                <option value="">選択してください</option>
+                <option th:each="book : ${availableBooks}"
+                        th:value="${book.id}"
+                        th:text="${book.id + ' / ' + book.title}"></option>
+            </select>
+
+            <button type="submit">貸出する</button>
+        </form>
+    </section>
+
+    <section class="card">
+        <h2>返却</h2>
+        <form method="post" th:action="@{/library/return}">
+            <label for="returnBookId">本</label>
+            <select id="returnBookId" name="bookId" required>
+                <option value="">選択してください</option>
+                <option th:each="book : ${borrowedBooks}"
+                        th:value="${book.id}"
+                        th:text="${book.id + ' / ' + book.title}"></option>
+            </select>
+
+            <button type="submit">返却する</button>
+        </form>
+    </section>
+
+    <section class="card">
+        <h2>本を追加</h2>
+        <form method="post" th:action="@{/library/books}">
+            <label for="title">タイトル</label>
+            <input id="title" name="title" placeholder="例: オブジェクト指向入門" required>
+
+            <label for="author">著者</label>
+            <input id="author" name="author" placeholder="例: Sato" required>
+
+            <button type="submit">本を追加する</button>
+        </form>
+    </section>
+
+    <section class="card">
+        <h2>会員登録</h2>
+        <form method="post" th:action="@{/library/members}">
+            <label for="name">名前</label>
+            <input id="name" name="name" placeholder="例: Haru" required>
+
+            <button type="submit">会員登録する</button>
+        </form>
+    </section>
+</div>
+</body>
+</html>

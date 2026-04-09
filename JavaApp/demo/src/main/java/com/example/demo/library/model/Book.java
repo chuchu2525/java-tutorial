@@ -46,4 +46,11 @@ public class Book {
     public boolean isBorrowedBy(String memberId) {
         return borrowed && memberId.equals(borrowedByMemberId);
     }
+
+    public String getStatusLabel() {
+        if (borrowed) {
+            return "貸出中";
+        }
+        return "貸出可能";
+    }
 }

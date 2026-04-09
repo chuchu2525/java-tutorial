@@ -24,6 +24,26 @@ public class LibraryService {
         return libraryRepository.findAllBooks();
     }
 
+    public List<Book> getAvailableBooks() {
+        List<Book> availableBooks = new ArrayList<>();
+        for (Book book : libraryRepository.findAllBooks()) {
+            if (book.isAvailable()) {
+                availableBooks.add(book);
+            }
+        }
+        return availableBooks;
+    }
+
+    public List<Book> getBorrowedBooks() {
+        List<Book> borrowedBooks = new ArrayList<>();
+        for (Book book : libraryRepository.findAllBooks()) {
+            if (book.isBorrowed()) {
+                borrowedBooks.add(book);
+            }
+        }
+        return borrowedBooks;
+    }
+
     public List<Member> getMembers() {
         return libraryRepository.findAllMembers();
     }
@@ -74,5 +94,45 @@ public class LibraryService {
         }
 
         return new ActionResponse(true, member.getName() + " が " + book.getTitle() + " を返却しました");
+    }
+
+    public ActionResponse returnBookByBookId(String bookId) {
+        Loan activeLoan = libraryRepository.findActiveLoanByBookId(bookId);
+        if (activeLoan == null) {
+            return new ActionResponse(false, "貸出中の本が見つかりません");
+        }
+        return returnBook(activeLoan.getMemberId(), bookId);
+    }
+
+    public ActionResponse addBook(String title, String author) {
+        String normalizedTitle = normalize(title);
+        String normalizedAuthor = normalize(author);
+
+        if (normalizedTitle.isEmpty()) {
+            return new ActionResponse(false, "本のタイトルを入力してください");
+        }
+        if (normalizedAuthor.isEmpty()) {
+            return new ActionResponse(false, "著者名を入力してください");
+        }
+
+        Book book = libraryRepository.saveBook(normalizedTitle, normalizedAuthor);
+        return new ActionResponse(true, book.getTitle() + " を追加しました");
+    }
+
+    public ActionResponse addMember(String name) {
+        String normalizedName = normalize(name);
+        if (normalizedName.isEmpty()) {
+            return new ActionResponse(false, "会員名を入力してください");
+        }
+
+        Member member = libraryRepository.saveMember(normalizedName);
+        return new ActionResponse(true, member.getName() + " を会員登録しました");
+    }
+
+    private String normalize(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value.trim();
     }
 }

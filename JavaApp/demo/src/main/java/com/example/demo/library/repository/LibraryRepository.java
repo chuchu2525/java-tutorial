@@ -14,6 +14,8 @@ public class LibraryRepository {
     private final Map<String, Book> books = new LinkedHashMap<>();
     private final Map<String, Member> members = new LinkedHashMap<>();
     private final List<Loan> loans = new ArrayList<>();
+    private int nextBookNumber = 4;
+    private int nextMemberNumber = 3;
 
     public LibraryRepository() {
         books.put("b1", new Book("b1", "Java入門", "Yamada"));
@@ -48,9 +50,32 @@ public class LibraryRepository {
         loans.add(loan);
     }
 
+    public Book saveBook(String title, String author) {
+        String bookId = "b" + nextBookNumber++;
+        Book book = new Book(bookId, title, author);
+        books.put(bookId, book);
+        return book;
+    }
+
+    public Member saveMember(String name) {
+        String memberId = "m" + nextMemberNumber++;
+        Member member = new Member(memberId, name);
+        members.put(memberId, member);
+        return member;
+    }
+
     public Loan findActiveLoan(String bookId, String memberId) {
         for (Loan loan : loans) {
             if (loan.isActive() && loan.getBookId().equals(bookId) && loan.getMemberId().equals(memberId)) {
+                return loan;
+            }
+        }
+        return null;
+    }
+
+    public Loan findActiveLoanByBookId(String bookId) {
+        for (Loan loan : loans) {
+            if (loan.isActive() && loan.getBookId().equals(bookId)) {
                 return loan;
             }
         }
