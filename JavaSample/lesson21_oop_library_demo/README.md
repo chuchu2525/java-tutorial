@@ -36,7 +36,7 @@
 
 ## 次に見るとよい場所
 
-OOP の流れが読めたら、次は Spring Boot 側の次のファイルを見ると比較しやすいです。
+OOP の流れが読めたら、Spring Boot 版は [JavaApp/demo/README.md](../../JavaApp/demo/README.md) のおすすめ順でドキュメントを読むと比較しやすいです。代表ファイルは次のとおりです。
 
 - `JavaApp/demo/src/main/java/com/example/demo/library/controller/LibraryController.java`
 - `JavaApp/demo/src/main/java/com/example/demo/library/service/LibraryService.java`
