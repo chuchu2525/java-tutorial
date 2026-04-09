@@ -12,6 +12,8 @@
 
 ## 2. 先に読むとよいファイル
 
+以下の `src/` で始まるパスは、このドキュメントのひとつ上の **`demo` ディレクトリ** をルートとした相対パスです。
+
 - `JavaSample/lesson21_oop_library_demo/Lesson21OopLibraryDemo.java`
 - `src/main/java/com/example/demo/library/controller/LibraryPageController.java`
 - `src/main/resources/templates/library.html`

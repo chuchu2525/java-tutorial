@@ -4,8 +4,8 @@
 
 ## ドキュメント
 
-- [demo の README（読む順・各ガイドへのリンク）](demo/README.md)
-- [プロジェクト構成・アーキテクチャ](ARCHITECTURE.md) — ディレクトリ全体とレイヤー、データの流れ
+- [demo の README（読む順・`docs/` 内ガイドへのリンク）](demo/README.md)
+- [プロジェクト構成・アーキテクチャ](docs/ARCHITECTURE.md) — ディレクトリ全体とレイヤー、データの流れ
 
 ## コードの場所
 
