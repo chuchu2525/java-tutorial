@@ -35,6 +35,14 @@
 - **DI（依存性注入）**: 必要な部品をコンストラクタ引数などで受け取る仕組み
 - **コンテナ**: Bean の生成・保持・配線を担当する Spring の入れ物
 - **PRG パターン**: POST の後に Redirect して、再送信を避ける定番手法
+- **MVC**: Model（データ）/ View（画面）/ Controller（受け口）に役割を分ける考え方
+- **DTO**: 画面や API とデータをやり取りするための入れ物オブジェクト
+- **ResponseEntity**: HTTP ステータスコードとレスポンス本文を一緒に返すための型
+- **RedirectAttributes**: リダイレクト先の 1 回だけ使うメッセージを渡す仕組み
+- **コンポーネントスキャン**: `@Controller` などを見つけて Bean 登録する処理
+- **in-memory**: メモリ上だけでデータを持つ方式（再起動で消える）
+- **JPA**: Java から DB を扱いやすくする標準仕様
+- **H2**: 学習や検証で使いやすい軽量データベース
 
 ---
 
@@ -72,7 +80,7 @@ public class DemoApplication {
 
 主な流れ:
 
-1. `@SpringBootApplication` を起点にコンポーネントスキャンが走る  
+1. `@SpringBootApplication` を起点にコンポーネントスキャン（用語ミニ辞典参照）が走る  
 2. `@Controller` / `@Service` / `@Repository` / `@Component` を見つける  
 3. 見つけたクラスのインスタンス（Bean）を作る  
 4. コンストラクタ引数を見て依存関係を注入する  
@@ -172,7 +180,7 @@ public class LibraryService {
 - `POST /library/books`: 本追加
 - `POST /library/members`: 会員追加
 
-`RedirectAttributes` でメッセージをフラッシュ属性として渡しているので、リダイレクト後に画面へ表示できます。
+`RedirectAttributes`（用語ミニ辞典参照）でメッセージをフラッシュ属性として渡しているので、リダイレクト後に画面へ表示できます。
 
 ### 4.3 Service が中心である理由
 
@@ -222,7 +230,7 @@ flowchart LR
 4. `LoanPolicy.validateBorrow` で条件判定  
 5. `Book` / `Member` / `Loan` を更新  
 6. `ActionResponse` を返す  
-7. Controller が `ResponseEntity` で `200` or `400` を返す
+7. Controller が `ResponseEntity`（用語ミニ辞典参照）で `200` or `400` を返す
 
 ここで学べるのは「**HTTP の責務と業務ルールの責務を分ける**」という設計です。
 
@@ -368,7 +376,7 @@ sequenceDiagram
 
 ### 7.3 API と画面が混ざって見える
 
-このアプリでは「同じ Service を API と MVC で共有」しています。  
+このアプリでは「同じ Service を API と MVC（用語ミニ辞典参照）で共有」しています。  
 入口（Controller）が違うだけで、業務ロジックの核は同じです。
 
 ここまでで覚えるのは 1 つだけ: **アノテーションは最初は 5 つ覚えれば十分**。
@@ -384,7 +392,35 @@ sequenceDiagram
 | `main` が `new` で配線する | Spring が Bean を作って配線する |
 | メソッド呼び出し中心 | HTTP + Controller 経由で呼ばれる |
 | 画面なし（コンソール） | MVC 画面（Thymeleaf）あり |
-| 手作業で入出力 | DTO / Model / View に分離 |
+| 手作業で入出力 | DTO（用語ミニ辞典参照） / Model / View に分離 |
+
+### 8.1 DTO と Model の違い（ここで混乱しやすい）
+
+混ざりやすい 2 つですが、役割は次のように分けます。
+
+```mermaid
+flowchart LR
+    A[Client/Browser]
+    B[Controller]
+    C[DTO<br/>受け渡し専用]
+    D[Service]
+    E[Model<br/>業務データ本体]
+
+    A -->|JSON / Form| B
+    B -->|入力を詰め替え| C
+    B -->|業務処理呼び出し| D
+    D -->|状態を更新| E
+    D -->|結果を返す| B
+    B -->|表示/応答用へ整形| C
+    B --> A
+```
+
+短く言うと:
+
+- **DTO**: 入出力の形をそろえるための箱（通信・画面向け）
+- **Model**: 業務ルールで更新される中心データ
+
+「外とやり取りする形」が DTO、「アプリ内部で意味を持つ状態」が Model と覚えると区別しやすいです。
 
 「難しくなった」のではなく、**役割分担が増えて現実のアプリに近づいた**と捉えると理解しやすいです。
 
@@ -396,7 +432,7 @@ sequenceDiagram
 
 1. `@Valid` と `BindingResult` を使ったバリデーション導入  
 2. 例外ハンドリング（`@ControllerAdvice`）を追加  
-3. In-memory `Repository` を JPA + H2 に置き換える  
+3. in-memory（用語ミニ辞典参照）`Repository` を JPA + H2（用語ミニ辞典参照）に置き換える  
 4. テスト追加（Service 単体 / Controller の Web テスト）  
 5. DTO と ViewModel の役割をさらに明確化
 
