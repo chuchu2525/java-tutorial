@@ -120,3 +120,9 @@ sequenceDiagram
 ### データの整合性維持
 - `LibraryService` が司令塔となり、`LoanPolicy` によるチェックを通った場合のみ、`Model` の状態変更と `Repository` への保存を行います。
 - `JavaSample` 版と `JavaApp` 版で、このドメインロジック（`Model` や `LoanPolicy`）がほぼ共通化されている点が、オブジェクト指向設計の利点です。
+
+---
+
+## 関連ドキュメント
+
+- [DTO（Data Transfer Object）とは](DTO.md) … `dto` パッケージの役割とエンティティとの違い

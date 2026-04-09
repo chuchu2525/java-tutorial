@@ -99,3 +99,7 @@ Content-Type: application/json
 - MVC では「Controller が Model を View に渡す流れ」を見る
 - フォームでは「選べる値をサーバー側がどう用意するか」を見る
 - まずコンソール版を読んでから Spring 版へ移ると、フレームワークが隠してくれる処理を理解しやすいです
+
+## 7. 入力バリデーション
+
+MVC と REST に Bean Validation を入れた変更の概要は [LIBRARY_DEMO_VALIDATION.md](LIBRARY_DEMO_VALIDATION.md) を参照してください。

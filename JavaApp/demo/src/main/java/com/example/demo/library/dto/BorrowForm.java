@@ -2,11 +2,11 @@ package com.example.demo.library.dto;
 
 import jakarta.validation.constraints.NotBlank;
 
-public class LoanRequest {
-    @NotBlank(message = "会員IDを入力してください")
+public class BorrowForm {
+    @NotBlank(message = "会員を選択してください")
     private String memberId;
 
-    @NotBlank(message = "本のIDを入力してください")
+    @NotBlank(message = "本を選択してください")
     private String bookId;
 
     public String getMemberId() {

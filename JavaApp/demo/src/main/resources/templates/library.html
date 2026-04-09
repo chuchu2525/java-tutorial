@@ -110,6 +110,12 @@
             color: #4b5563;
             font-size: 0.95rem;
         }
+
+        .field-error {
+            color: #991b1b;
+            font-size: 0.9rem;
+            margin: -6px 0 10px;
+        }
     </style>
 </head>
 <body>
@@ -193,22 +199,24 @@
 
     <section class="card">
         <h2>貸出</h2>
-        <form method="post" th:action="@{/library/borrow}">
-            <label for="memberId">会員</label>
-            <select id="memberId" name="memberId" required>
+        <form method="post" th:action="@{/library/borrow}" th:object="${borrowForm}">
+            <label for="borrow-memberId">会員</label>
+            <select id="borrow-memberId" th:field="*{memberId}">
                 <option value="">選択してください</option>
                 <option th:each="member : ${members}"
                         th:value="${member.id}"
                         th:text="${member.id + ' / ' + member.name}"></option>
             </select>
+            <p class="field-error" th:if="${#fields.hasErrors('memberId')}" th:errors="*{memberId}"></p>
 
-            <label for="bookId">本</label>
-            <select id="bookId" name="bookId" required>
+            <label for="borrow-bookId">本</label>
+            <select id="borrow-bookId" th:field="*{bookId}">
                 <option value="">選択してください</option>
                 <option th:each="book : ${availableBooks}"
                         th:value="${book.id}"
                         th:text="${book.id + ' / ' + book.title}"></option>
             </select>
+            <p class="field-error" th:if="${#fields.hasErrors('bookId')}" th:errors="*{bookId}"></p>
 
             <button type="submit">貸出する</button>
         </form>
@@ -216,14 +224,15 @@
 
     <section class="card">
         <h2>返却</h2>
-        <form method="post" th:action="@{/library/return}">
-            <label for="returnBookId">本</label>
-            <select id="returnBookId" name="bookId" required>
+        <form method="post" th:action="@{/library/return}" th:object="${returnForm}">
+            <label for="return-bookId">本</label>
+            <select id="return-bookId" th:field="*{bookId}">
                 <option value="">選択してください</option>
                 <option th:each="book : ${borrowedBooks}"
                         th:value="${book.id}"
                         th:text="${book.id + ' / ' + book.title}"></option>
             </select>
+            <p class="field-error" th:if="${#fields.hasErrors('bookId')}" th:errors="*{bookId}"></p>
 
             <button type="submit">返却する</button>
         </form>
@@ -231,12 +240,14 @@
 
     <section class="card">
         <h2>本を追加</h2>
-        <form method="post" th:action="@{/library/books}">
-            <label for="title">タイトル</label>
-            <input id="title" name="title" placeholder="例: オブジェクト指向入門" required>
+        <form method="post" th:action="@{/library/books}" th:object="${addBookForm}">
+            <label for="add-title">タイトル</label>
+            <input id="add-title" type="text" th:field="*{title}" placeholder="例: オブジェクト指向入門" autocomplete="off">
+            <p class="field-error" th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></p>
 
-            <label for="author">著者</label>
-            <input id="author" name="author" placeholder="例: Sato" required>
+            <label for="add-author">著者</label>
+            <input id="add-author" type="text" th:field="*{author}" placeholder="例: Sato" autocomplete="off">
+            <p class="field-error" th:if="${#fields.hasErrors('author')}" th:errors="*{author}"></p>
 
             <button type="submit">本を追加する</button>
         </form>
@@ -244,9 +255,10 @@
 
     <section class="card">
         <h2>会員登録</h2>
-        <form method="post" th:action="@{/library/members}">
-            <label for="name">名前</label>
-            <input id="name" name="name" placeholder="例: Haru" required>
+        <form method="post" th:action="@{/library/members}" th:object="${addMemberForm}">
+            <label for="addMember-name">名前</label>
+            <input id="addMember-name" type="text" th:field="*{name}" placeholder="例: Haru" autocomplete="off">
+            <p class="field-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></p>
 
             <button type="submit">会員登録する</button>
         </form>
