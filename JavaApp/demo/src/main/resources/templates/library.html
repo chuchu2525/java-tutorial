@@ -140,7 +140,7 @@
             </tr>
             </thead>
             <tbody>
-            <tr th:each="book : ${books}">
+            <tr th:each="book : ${page.books}">
                 <td th:text="${book.id}"></td>
                 <td th:text="${book.title}"></td>
                 <td th:text="${book.author}"></td>
@@ -165,7 +165,7 @@
             </tr>
             </thead>
             <tbody>
-            <tr th:each="member : ${members}">
+            <tr th:each="member : ${page.members}">
                 <td th:text="${member.id}"></td>
                 <td th:text="${member.name}"></td>
                 <td th:text="${member.borrowedBookCount}"></td>
@@ -185,12 +185,12 @@
             </tr>
             </thead>
             <tbody>
-            <tr th:each="book : ${borrowedBooks}">
+            <tr th:each="book : ${page.borrowedBooks}">
                 <td th:text="${book.id}"></td>
                 <td th:text="${book.title}"></td>
                 <td th:text="${book.author}"></td>
             </tr>
-            <tr th:if="${#lists.isEmpty(borrowedBooks)}">
+            <tr th:if="${#lists.isEmpty(page.borrowedBooks)}">
                 <td colspan="3">貸出中の本はありません</td>
             </tr>
             </tbody>
@@ -203,7 +203,7 @@
             <label for="borrow-memberId">会員</label>
             <select id="borrow-memberId" th:field="*{memberId}">
                 <option value="">選択してください</option>
-                <option th:each="member : ${members}"
+                <option th:each="member : ${page.members}"
                         th:value="${member.id}"
                         th:text="${member.id + ' / ' + member.name}"></option>
             </select>
@@ -212,9 +212,9 @@
             <label for="borrow-bookId">本</label>
             <select id="borrow-bookId" th:field="*{bookId}">
                 <option value="">選択してください</option>
-                <option th:each="book : ${availableBooks}"
-                        th:value="${book.id}"
-                        th:text="${book.id + ' / ' + book.title}"></option>
+                <option th:each="opt : ${page.availableBookOptions}"
+                        th:value="${opt.value}"
+                        th:text="${opt.label}"></option>
             </select>
             <p class="field-error" th:if="${#fields.hasErrors('bookId')}" th:errors="*{bookId}"></p>
 
@@ -228,9 +228,9 @@
             <label for="return-bookId">本</label>
             <select id="return-bookId" th:field="*{bookId}">
                 <option value="">選択してください</option>
-                <option th:each="book : ${borrowedBooks}"
-                        th:value="${book.id}"
-                        th:text="${book.id + ' / ' + book.title}"></option>
+                <option th:each="opt : ${page.borrowedBookOptions}"
+                        th:value="${opt.value}"
+                        th:text="${opt.label}"></option>
             </select>
             <p class="field-error" th:if="${#fields.hasErrors('bookId')}" th:errors="*{bookId}"></p>
 

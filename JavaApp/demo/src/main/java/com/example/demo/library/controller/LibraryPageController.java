@@ -5,8 +5,14 @@ import com.example.demo.library.dto.AddBookForm;
 import com.example.demo.library.dto.AddMemberForm;
 import com.example.demo.library.dto.BorrowForm;
 import com.example.demo.library.dto.ReturnForm;
+import com.example.demo.library.model.Book;
 import com.example.demo.library.service.LibraryService;
+import com.example.demo.library.view.BookRowView;
+import com.example.demo.library.view.LibraryPageViewModel;
+import com.example.demo.library.view.MemberRowView;
+import com.example.demo.library.view.SelectOptionView;
 import jakarta.validation.Valid;
+import java.util.List;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -84,10 +90,15 @@ public class LibraryPageController {
     }
 
     private void populateLibraryPage(Model model) {
-        model.addAttribute("books", libraryService.getBooks());
-        model.addAttribute("members", libraryService.getMembers());
-        model.addAttribute("availableBooks", libraryService.getAvailableBooks());
-        model.addAttribute("borrowedBooks", libraryService.getBorrowedBooks());
+        populateViewData(model);
+        populateForms(model);
+    }
+
+    private void populateViewData(Model model) {
+        model.addAttribute("page", buildPageViewModel());
+    }
+
+    private void populateForms(Model model) {
         if (!model.containsAttribute("borrowForm")) {
             model.addAttribute("borrowForm", new BorrowForm());
         }
@@ -100,6 +111,24 @@ public class LibraryPageController {
         if (!model.containsAttribute("addMemberForm")) {
             model.addAttribute("addMemberForm", new AddMemberForm());
         }
+    }
+
+    private LibraryPageViewModel buildPageViewModel() {
+        List<BookRowView> books = libraryService.getBooks().stream().map(BookRowView::from).toList();
+        List<MemberRowView> members = libraryService.getMembers().stream().map(MemberRowView::from).toList();
+
+        List<Book> availableDomain = libraryService.getAvailableBooks();
+        List<SelectOptionView> availableBookOptions = availableDomain.stream()
+                .map(b -> new SelectOptionView(b.getId(), b.getId() + " / " + b.getTitle()))
+                .toList();
+
+        List<Book> borrowedDomain = libraryService.getBorrowedBooks();
+        List<BookRowView> borrowedBooks = borrowedDomain.stream().map(BookRowView::from).toList();
+        List<SelectOptionView> borrowedBookOptions = borrowedDomain.stream()
+                .map(b -> new SelectOptionView(b.getId(), b.getId() + " / " + b.getTitle()))
+                .toList();
+
+        return new LibraryPageViewModel(books, members, availableBookOptions, borrowedBooks, borrowedBookOptions);
     }
 
     private void addMessage(RedirectAttributes redirectAttributes, ActionResponse response) {
