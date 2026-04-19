@@ -26,4 +26,14 @@ class LibraryControllerValidationTests {
                 .andExpect(jsonPath("$.errors").isArray())
                 .andExpect(jsonPath("$.errors.length()").value(2));
     }
+
+    @Test
+    void postLoansWithMalformedJsonReturns400WithUnifiedBody() throws Exception {
+        mockMvc.perform(post("/api/library/loans").contentType(MediaType.APPLICATION_JSON).content("{"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message")
+                        .value("JSONの形式が正しくありません。キーと値の構文を確認してください。"))
+                .andExpect(jsonPath("$.errors").isArray())
+                .andExpect(jsonPath("$.errors.length()").value(0));
+    }
 }

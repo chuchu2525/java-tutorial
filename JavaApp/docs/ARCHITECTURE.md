@@ -28,6 +28,7 @@
     └── demo/                  # Spring Bootによる図書貸出管理アプリ
         ├── src/main/java/com/example/demo/library/
         │   ├── controller/    # APIエンドポイント（外部との接続）
+        │   ├── web/           # 図書デモ用の例外ハンドラ（REST/MVC の Advice）
         │   ├── service/       # 業務ロジック（貸出・返却のルール）
         │   ├── repository/    # データアクセス（データの保存・取得）
         │   ├── model/         # ドメインモデル（本、会員、貸出情報）
@@ -120,6 +121,20 @@ sequenceDiagram
 ### データの整合性維持
 - `LibraryService` が司令塔となり、`LoanPolicy` によるチェックを通った場合のみ、`Model` の状態変更と `Repository` への保存を行います。
 - `JavaSample` 版と `JavaApp` 版で、このドメインロジック（`Model` や `LoanPolicy`）がほぼ共通化されている点が、オブジェクト指向設計の利点です。
+
+---
+
+## 5. 図書デモのエラー処理（業務失敗と例外）
+
+図書デモでは、次の **2 層** に分けてエラーを扱います。
+
+| 種類 | 表現の仕方 | 例 |
+| :--- | :--- | :--- |
+| **想定内の業務失敗** | `LibraryService` が返す `ActionResponse`（`success=false` とメッセージ）。REST ではコントローラが HTTP 400 とともに JSON で返す。 | 貸出上限、既に貸出中 |
+| **入力形式・想定外** | `library.web` の `@ControllerAdvice` / `@RestControllerAdvice`（`assignableTypes` で図書のコントローラに限定）。 | Bean Validation 失敗、JSON 壊れ、MVC での未捕捉例外 |
+
+- **REST API**: `LibraryApiExceptionHandler` がバリデーション失敗と `HttpMessageNotReadableException` をまとめ、`message` と `errors` という同じトップレベル構造で返します。
+- **MVC 画面**: フォームの検証エラーは従来どおり `BindingResult` とテンプレートで表示します。想定外の例外は `LibraryPageExceptionHandler` がログに残したうえで、フラッシュメッセージ付きで `/library` へリダイレクトします。
 
 ---
 

@@ -22,12 +22,15 @@
   - **成功時**: 従来どおり `RedirectAttributes` でメッセージを載せて `redirect:/library`。
 - 共通で一覧用データと空のフォームを載せる処理を `populateLibraryPage` にまとめた。検証失敗時は、送信されたフォームだけ `BindingResult` 付きで残り、他フォームは未送信なら空インスタンスを補う。
 - `templates/library.html` では各フォームに `th:object` / `th:field` / `th:errors` を使い、ブラウザの `required` に頼らずサーバー検証を主とする。
+- 想定外の例外は `LibraryPageExceptionHandler`（`library.web`）が捕捉し、ログにスタックを残したうえでフラッシュメッセージ付きで `/library` へリダイレクトする。
 
 ### REST API（`/api/library`）
 
 - `LoanRequest` / `ReturnRequest` の `memberId` と `bookId` に `@NotBlank` を付与。
 - `LibraryController` の POST で `@Valid` を指定。
-- `LibraryRestExceptionHandler`（`@RestControllerAdvice`、`assignableTypes = LibraryController.class`）で `MethodArgumentNotValidException` を捕捉し、HTTP 400 と次の形の JSON を返す。
+- `LibraryApiExceptionHandler`（`library.web` パッケージ、`@RestControllerAdvice`、`assignableTypes = LibraryController.class`）で次を捕捉し、HTTP 400 と次の形の JSON を返す。
+  - `MethodArgumentNotValidException`（Bean Validation 失敗）
+  - `HttpMessageNotReadableException`（JSON 形式不正。`errors` は空配列）
   - `message`: 固定の概要文
   - `errors`: `field` と `message` の配列
 
@@ -37,7 +40,8 @@
 
 ### 自動テスト
 
-- `LibraryControllerValidationTests`: `POST /api/library/loans` に空の JSON `{}` を送り、400 と `message` / `errors` が返ることを `MockMvc` で検証。
+- `LibraryControllerValidationTests`: `POST /api/library/loans` に空の JSON `{}` を送り、400 と `message` / `errors` が返ることを `MockMvc` で検証。不正 JSON でも 400 と統一された `message` / `errors` になることを検証。
+- `LibraryPageExceptionHandlerTests`: `LibraryService` が例外を投げたとき、`GET /library` が `/library` へリダイレクトしフラッシュにエラーメッセージが載ることを検証。
 - Spring Boot 4 ではスライス用の `@WebMvcTest` のパッケージが変わっているため、このテストは **`@SpringBootTest` と `@AutoConfigureMockMvc`**（`org.springframework.boot.webmvc.test.autoconfigure`）でフルコンテキストを起動している。
 
 ## 主なファイル一覧
@@ -47,7 +51,8 @@
 | 依存 | `pom.xml` |
 | MVC コントローラ | `src/main/java/.../library/controller/LibraryPageController.java` |
 | REST コントローラ | `src/main/java/.../library/controller/LibraryController.java` |
-| REST 例外ハンドラ | `src/main/java/.../library/controller/LibraryRestExceptionHandler.java` |
+| REST 例外ハンドラ | `src/main/java/.../library/web/LibraryApiExceptionHandler.java` |
+| MVC 想定外例外 | `src/main/java/.../library/web/LibraryPageExceptionHandler.java` |
 | フォーム | `src/main/java/.../library/dto/BorrowForm.java` ほか 3 クラス |
 | API 用 DTO | `src/main/java/.../library/dto/LoanRequest.java`, `ReturnRequest.java` |
 | テンプレート | `src/main/resources/templates/library.html` |
