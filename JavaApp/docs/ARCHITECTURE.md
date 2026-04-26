@@ -141,3 +141,4 @@ sequenceDiagram
 ## 関連ドキュメント
 
 - [DTO（Data Transfer Object）とは](DTO.md) … `dto` パッケージの役割とエンティティとの違い
+- [LoanPolicy と責務分担](description/loan-policy-responsibility.md) … `LibraryService` / `LibraryRepository` / `LoanPolicy` の役割分担
