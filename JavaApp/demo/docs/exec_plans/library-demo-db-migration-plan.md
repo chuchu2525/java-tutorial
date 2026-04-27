@@ -243,7 +243,8 @@ erDiagram
 - `loan`: 貸出履歴と現在の貸出状態を持つ。
 - 貸出中の判定は `loan.returned_date is null` とする。
 - `loan.book_id` は `book.id`、`loan.member_id` は `member.id` を参照する外部キー制約を付ける。
-- 初回 DB 化では、貸出状態は `Loan` に一本化するが、`Book` / `Member` と `Loan` の関連は Entity の `@ManyToOne` ではなく ID 参照で扱う。
+- `Loan` は `Book` / `Member` への `@ManyToOne` を持たせ、DB 上も外部キー制約を張る。
+- Controller、Service、フォーム、API は引き続き `bookId` / `memberId` を受け取り、Repository 層で ID から Entity を取得して扱う。
 
 ### データ整合性方針
 
@@ -388,12 +389,12 @@ spring.h2.console.path=/h2-console
 
 - `@Entity`
 - DB 用主キー `@Id @GeneratedValue Long id`
-- `bookId`
-- `memberId`
+- `@ManyToOne Book book`
+- `@ManyToOne Member member`
 - `loanDate`
 - `returnedDate`
 - JPA 用 no-args constructor
-- `bookId` / `memberId` は ID として保持し、Entity 関連は張らない
+- 外部向けには `getBookId()` / `getMemberId()` で ID を返せるようにする
 - `returnedDate == null` を貸出中とみなす
 - `markReturned(LocalDate returnedDate)` で返却日を記録する
 
@@ -483,7 +484,6 @@ DB 経由で次を確認する。
 - Flyway / Liquibase の導入
 - 認証・認可
 - 貸出履歴の詳細画面
-- `Loan` から `Book` / `Member` への Entity 関連マッピング
 - 同時リクエスト時の競合制御
 - 未返却 loan を最大1件にする DB 部分ユニークインデックス
 - REST API のレスポンス形式変更

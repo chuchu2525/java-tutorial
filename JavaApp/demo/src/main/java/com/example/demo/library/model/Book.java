@@ -1,11 +1,17 @@
 package com.example.demo.library.model;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+
+@Entity
 public class Book {
-    private final String id;
-    private final String title;
-    private final String author;
-    private boolean borrowed;
-    private String borrowedByMemberId;
+    @Id
+    private String id;
+    private String title;
+    private String author;
+
+    protected Book() {
+    }
 
     public Book(String id, String title, String author) {
         this.id = id;
@@ -23,34 +29,5 @@ public class Book {
 
     public String getAuthor() {
         return author;
-    }
-
-    public boolean isBorrowed() {
-        return borrowed;
-    }
-
-    public boolean isAvailable() {
-        return !borrowed;
-    }
-
-    public void borrow(String memberId) {
-        borrowed = true;
-        borrowedByMemberId = memberId;
-    }
-
-    public void giveBack() {
-        borrowed = false;
-        borrowedByMemberId = null;
-    }
-
-    public boolean isBorrowedBy(String memberId) {
-        return borrowed && memberId.equals(borrowedByMemberId);
-    }
-
-    public String getStatusLabel() {
-        if (borrowed) {
-            return "貸出中";
-        }
-        return "貸出可能";
     }
 }

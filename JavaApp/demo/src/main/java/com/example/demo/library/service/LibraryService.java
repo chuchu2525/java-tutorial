@@ -7,8 +7,11 @@ import com.example.demo.library.model.Member;
 import com.example.demo.library.repository.LibraryRepository;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class LibraryService {
@@ -20,60 +23,73 @@ public class LibraryService {
         this.loanPolicy = loanPolicy;
     }
 
+    @Transactional(readOnly = true)
     public List<Book> getBooks() {
         return libraryRepository.findAllBooks();
     }
 
+    @Transactional(readOnly = true)
     public List<Book> getAvailableBooks() {
+        Set<String> unreturnedBookIds = getUnreturnedBookIds();
         List<Book> availableBooks = new ArrayList<>();
         for (Book book : libraryRepository.findAllBooks()) {
-            if (book.isAvailable()) {
+            if (!unreturnedBookIds.contains(book.getId())) {
                 availableBooks.add(book);
             }
         }
         return availableBooks;
     }
 
+    @Transactional(readOnly = true)
     public List<Book> getBorrowedBooks() {
+        Set<String> unreturnedBookIds = getUnreturnedBookIds();
         List<Book> borrowedBooks = new ArrayList<>();
         for (Book book : libraryRepository.findAllBooks()) {
-            if (book.isBorrowed()) {
+            if (unreturnedBookIds.contains(book.getId())) {
                 borrowedBooks.add(book);
             }
         }
         return borrowedBooks;
     }
 
+    @Transactional(readOnly = true)
     public List<Member> getMembers() {
         return libraryRepository.findAllMembers();
     }
 
+    @Transactional(readOnly = true)
     public List<Loan> getActiveLoans() {
-        List<Loan> activeLoans = new ArrayList<>();
-        for (Loan loan : libraryRepository.findAllLoans()) {
-            if (loan.isActive()) {
-                activeLoans.add(loan);
-            }
-        }
-        return activeLoans;
+        return libraryRepository.findUnreturnedLoans();
     }
 
+    @Transactional(readOnly = true)
+    public int getBorrowedBookCount(String memberId) {
+        return Math.toIntExact(libraryRepository.countUnreturnedLoansByMemberId(memberId));
+    }
+
+    @Transactional(readOnly = true)
+    public boolean isBookBorrowed(String bookId) {
+        return libraryRepository.findUnreturnedLoanByBookId(bookId) != null;
+    }
+
+    @Transactional
     public ActionResponse borrowBook(String memberId, String bookId) {
         Member member = libraryRepository.findMemberById(memberId);
         Book book = libraryRepository.findBookById(bookId);
-        String validationResult = loanPolicy.validateBorrow(member, book);
+        Loan unreturnedLoan = libraryRepository.findUnreturnedLoanByBookId(bookId);
+        long unreturnedLoanCount = libraryRepository.countUnreturnedLoansByMemberId(memberId);
+        String validationResult = loanPolicy.validateBorrow(member, book, unreturnedLoan, unreturnedLoanCount);
 
         if (!"OK".equals(validationResult)) {
             return new ActionResponse(false, validationResult);
         }
 
-        book.borrow(memberId);
-        member.borrowBook(bookId);
-        libraryRepository.saveLoan(new Loan(bookId, memberId, LocalDate.now()));
+        libraryRepository.createLoan(book, member, LocalDate.now());
 
         return new ActionResponse(true, member.getName() + " が " + book.getTitle() + " を借りました");
     }
 
+    @Transactional
     public ActionResponse returnBook(String memberId, String bookId) {
         Member member = libraryRepository.findMemberById(memberId);
         Book book = libraryRepository.findBookById(bookId);
@@ -81,29 +97,28 @@ public class LibraryService {
         if (member == null || book == null) {
             return new ActionResponse(false, "返却対象が見つかりません");
         }
-        if (!book.isBorrowedBy(memberId) || !member.hasBook(bookId)) {
+
+        Loan unreturnedLoan = libraryRepository.findUnreturnedLoan(bookId, memberId);
+        if (unreturnedLoan == null) {
             return new ActionResponse(false, "その会員はこの本を借りていません");
         }
 
-        book.giveBack();
-        member.returnBook(bookId);
-
-        Loan activeLoan = libraryRepository.findActiveLoan(bookId, memberId);
-        if (activeLoan != null) {
-            activeLoan.markReturned();
-        }
+        unreturnedLoan.markReturned(LocalDate.now());
+        libraryRepository.saveLoan(unreturnedLoan);
 
         return new ActionResponse(true, member.getName() + " が " + book.getTitle() + " を返却しました");
     }
 
+    @Transactional
     public ActionResponse returnBookByBookId(String bookId) {
-        Loan activeLoan = libraryRepository.findActiveLoanByBookId(bookId);
-        if (activeLoan == null) {
+        Loan unreturnedLoan = libraryRepository.findUnreturnedLoanByBookId(bookId);
+        if (unreturnedLoan == null) {
             return new ActionResponse(false, "貸出中の本が見つかりません");
         }
-        return returnBook(activeLoan.getMemberId(), bookId);
+        return returnBook(unreturnedLoan.getMemberId(), bookId);
     }
 
+    @Transactional
     public ActionResponse addBook(String title, String author) {
         String normalizedTitle = normalize(title);
         String normalizedAuthor = normalize(author);
@@ -119,6 +134,7 @@ public class LibraryService {
         return new ActionResponse(true, book.getTitle() + " を追加しました");
     }
 
+    @Transactional
     public ActionResponse addMember(String name) {
         String normalizedName = normalize(name);
         if (normalizedName.isEmpty()) {
@@ -127,6 +143,14 @@ public class LibraryService {
 
         Member member = libraryRepository.saveMember(normalizedName);
         return new ActionResponse(true, member.getName() + " を会員登録しました");
+    }
+
+    private Set<String> getUnreturnedBookIds() {
+        Set<String> bookIds = new HashSet<>();
+        for (Loan loan : libraryRepository.findUnreturnedLoans()) {
+            bookIds.add(loan.getBookId());
+        }
+        return bookIds;
     }
 
     private String normalize(String value) {

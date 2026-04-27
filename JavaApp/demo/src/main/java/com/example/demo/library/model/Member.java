@@ -1,12 +1,16 @@
 package com.example.demo.library.model;
 
-import java.util.ArrayList;
-import java.util.List;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
 
+@Entity
 public class Member {
-    private final String id;
-    private final String name;
-    private final List<String> borrowedBookIds = new ArrayList<>();
+    @Id
+    private String id;
+    private String name;
+
+    protected Member() {
+    }
 
     public Member(String id, String name) {
         this.id = id;
@@ -19,21 +23,5 @@ public class Member {
 
     public String getName() {
         return name;
-    }
-
-    public int getBorrowedBookCount() {
-        return borrowedBookIds.size();
-    }
-
-    public boolean hasBook(String bookId) {
-        return borrowedBookIds.contains(bookId);
-    }
-
-    public void borrowBook(String bookId) {
-        borrowedBookIds.add(bookId);
-    }
-
-    public void returnBook(String bookId) {
-        borrowedBookIds.remove(bookId);
     }
 }

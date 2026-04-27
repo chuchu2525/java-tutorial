@@ -3,82 +3,119 @@ package com.example.demo.library.repository;
 import com.example.demo.library.model.Book;
 import com.example.demo.library.model.Loan;
 import com.example.demo.library.model.Member;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import org.springframework.stereotype.Repository;
 
 @Repository
 public class LibraryRepository {
-    private final Map<String, Book> books = new LinkedHashMap<>();
-    private final Map<String, Member> members = new LinkedHashMap<>();
-    private final List<Loan> loans = new ArrayList<>();
-    private int nextBookNumber = 4;
-    private int nextMemberNumber = 3;
+    private final BookJpaRepository bookJpaRepository;
+    private final MemberJpaRepository memberJpaRepository;
+    private final LoanJpaRepository loanJpaRepository;
 
-    public LibraryRepository() {
-        books.put("b1", new Book("b1", "Java入門", "Yamada"));
-        books.put("b2", new Book("b2", "Spring Boot入門", "Suzuki"));
-        books.put("b3", new Book("b3", "設計の基本", "Tanaka"));
-
-        members.put("m1", new Member("m1", "Yuu"));
-        members.put("m2", new Member("m2", "Aoi"));
+    public LibraryRepository(BookJpaRepository bookJpaRepository,
+                             MemberJpaRepository memberJpaRepository,
+                             LoanJpaRepository loanJpaRepository) {
+        this.bookJpaRepository = bookJpaRepository;
+        this.memberJpaRepository = memberJpaRepository;
+        this.loanJpaRepository = loanJpaRepository;
     }
 
     public List<Book> findAllBooks() {
-        return new ArrayList<>(books.values());
+        return bookJpaRepository.findAll();
     }
 
     public List<Member> findAllMembers() {
-        return new ArrayList<>(members.values());
+        return memberJpaRepository.findAll();
     }
 
     public List<Loan> findAllLoans() {
-        return new ArrayList<>(loans);
+        return loanJpaRepository.findAll();
+    }
+
+    public List<Loan> findUnreturnedLoans() {
+        return loanJpaRepository.findByReturnedDateIsNull();
     }
 
     public Book findBookById(String bookId) {
-        return books.get(bookId);
+        return bookJpaRepository.findById(bookId).orElse(null);
     }
 
     public Member findMemberById(String memberId) {
-        return members.get(memberId);
+        return memberJpaRepository.findById(memberId).orElse(null);
     }
 
-    public void saveLoan(Loan loan) {
-        loans.add(loan);
+    public Loan saveLoan(Loan loan) {
+        return loanJpaRepository.save(loan);
     }
 
     public Book saveBook(String title, String author) {
-        String bookId = "b" + nextBookNumber++;
-        Book book = new Book(bookId, title, author);
-        books.put(bookId, book);
-        return book;
+        Book book = new Book(nextBookId(), title, author);
+        return bookJpaRepository.save(book);
     }
 
     public Member saveMember(String name) {
-        String memberId = "m" + nextMemberNumber++;
-        Member member = new Member(memberId, name);
-        members.put(memberId, member);
-        return member;
+        Member member = new Member(nextMemberId(), name);
+        return memberJpaRepository.save(member);
     }
 
-    public Loan findActiveLoan(String bookId, String memberId) {
-        for (Loan loan : loans) {
-            if (loan.isActive() && loan.getBookId().equals(bookId) && loan.getMemberId().equals(memberId)) {
-                return loan;
-            }
-        }
-        return null;
+    public Loan findUnreturnedLoan(String bookId, String memberId) {
+        return loanJpaRepository.findByBook_IdAndMember_IdAndReturnedDateIsNull(bookId, memberId).orElse(null);
     }
 
-    public Loan findActiveLoanByBookId(String bookId) {
-        for (Loan loan : loans) {
-            if (loan.isActive() && loan.getBookId().equals(bookId)) {
-                return loan;
-            }
+    public Loan findUnreturnedLoanByBookId(String bookId) {
+        return loanJpaRepository.findByBook_IdAndReturnedDateIsNull(bookId).orElse(null);
+    }
+
+    public long countUnreturnedLoansByMemberId(String memberId) {
+        return loanJpaRepository.countByMember_IdAndReturnedDateIsNull(memberId);
+    }
+
+    public Loan createLoan(Book book, Member member, LocalDate loanDate) {
+        return loanJpaRepository.save(new Loan(book, member, loanDate));
+    }
+
+    public boolean hasAnyBooks() {
+        return bookJpaRepository.count() > 0;
+    }
+
+    public boolean hasAnyMembers() {
+        return memberJpaRepository.count() > 0;
+    }
+
+    public void saveInitialBooks(List<Book> books) {
+        bookJpaRepository.saveAll(books);
+    }
+
+    public void saveInitialMembers(List<Member> members) {
+        memberJpaRepository.saveAll(members);
+    }
+
+    private String nextBookId() {
+        return "b" + nextNumber(findAllBooks().stream().map(Book::getId).toList(), "b");
+    }
+
+    private String nextMemberId() {
+        return "m" + nextNumber(findAllMembers().stream().map(Member::getId).toList(), "m");
+    }
+
+    private int nextNumber(List<String> ids, String prefix) {
+        return ids.stream()
+                .filter(id -> id != null && id.startsWith(prefix))
+                .map(id -> id.substring(prefix.length()))
+                .map(this::parseNumberOrNull)
+                .filter(number -> number != null)
+                .max(Comparator.naturalOrder())
+                .map(number -> number + 1)
+                .orElse(1);
+    }
+
+    private Integer parseNumberOrNull(String value) {
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+            return null;
         }
-        return null;
     }
 }

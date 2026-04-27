@@ -7,12 +7,12 @@ import com.example.demo.library.model.Book;
  */
 public record BookRowView(String id, String title, String author, String statusLabel, boolean borrowed) {
 
-    public static BookRowView from(Book book) {
+    public static BookRowView from(Book book, boolean borrowed) {
         return new BookRowView(
                 book.getId(),
                 book.getTitle(),
                 book.getAuthor(),
-                book.getStatusLabel(),
-                book.isBorrowed());
+                borrowed ? "貸出中" : "貸出可能",
+                borrowed);
     }
 }

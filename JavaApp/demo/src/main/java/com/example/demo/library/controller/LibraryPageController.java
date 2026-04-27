@@ -114,8 +114,12 @@ public class LibraryPageController {
     }
 
     private LibraryPageViewModel buildPageViewModel() {
-        List<BookRowView> books = libraryService.getBooks().stream().map(BookRowView::from).toList();
-        List<MemberRowView> members = libraryService.getMembers().stream().map(MemberRowView::from).toList();
+        List<BookRowView> books = libraryService.getBooks().stream()
+                .map(book -> BookRowView.from(book, libraryService.isBookBorrowed(book.getId())))
+                .toList();
+        List<MemberRowView> members = libraryService.getMembers().stream()
+                .map(member -> MemberRowView.from(member, libraryService.getBorrowedBookCount(member.getId())))
+                .toList();
 
         List<Book> availableDomain = libraryService.getAvailableBooks();
         List<SelectOptionView> availableBookOptions = availableDomain.stream()
@@ -123,7 +127,9 @@ public class LibraryPageController {
                 .toList();
 
         List<Book> borrowedDomain = libraryService.getBorrowedBooks();
-        List<BookRowView> borrowedBooks = borrowedDomain.stream().map(BookRowView::from).toList();
+        List<BookRowView> borrowedBooks = borrowedDomain.stream()
+                .map(book -> BookRowView.from(book, true))
+                .toList();
         List<SelectOptionView> borrowedBookOptions = borrowedDomain.stream()
                 .map(b -> new SelectOptionView(b.getId(), b.getId() + " / " + b.getTitle()))
                 .toList();

@@ -7,7 +7,7 @@ import com.example.demo.library.model.Member;
  */
 public record MemberRowView(String id, String name, int borrowedBookCount) {
 
-    public static MemberRowView from(Member member) {
-        return new MemberRowView(member.getId(), member.getName(), member.getBorrowedBookCount());
+    public static MemberRowView from(Member member, int borrowedBookCount) {
+        return new MemberRowView(member.getId(), member.getName(), borrowedBookCount);
     }
 }
