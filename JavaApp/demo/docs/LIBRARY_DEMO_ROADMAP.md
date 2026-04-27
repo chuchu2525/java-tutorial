@@ -108,6 +108,26 @@
 
 この段階まで行くと、Spring Boot の入門教材としてかなり完成度が高いです。
 
+### Phase 7: PostgreSQL に切り替える
+
+- H2 ではなく PostgreSQL に接続する
+- PostgreSQL 用の JDBC driver を追加する
+- `application.properties` の datasource 設定を PostgreSQL 用にする
+- ローカルの PostgreSQL に接続して既存機能を動かす
+- H2 と PostgreSQL の違いを確認する
+
+この段階では、「JPA のコードは大きく変えずに、接続先 DB を変えると何が起きるか」を学びます。
+
+### Phase 8: DB 運用に近い構成へ進める
+
+- Docker Compose で PostgreSQL を起動できるようにする
+- `application-h2.properties` / `application-postgres.properties` などで profile を分ける
+- `ddl-auto=update` ではなく Flyway でテーブル定義を管理する
+- 初期データ投入を Java の起動処理から SQL migration または seed 用処理へ整理する
+- テスト用 DB と開発用 DB の扱いを分ける
+
+この段階では、「DB を使える」から「DB 変更を履歴として管理し、環境差分を減らす」ことに進みます。
+
 ## どこまでやれば十分か
 
 もし「最初の教材として完成」と言えるラインを 1 つ決めるなら、ここまでで十分です。
@@ -129,8 +149,10 @@
 1. バリデーションを入れる
 2. 画面用 DTO または ViewModel を分ける
 3. 例外処理を整理する
-4. DB 化する
-5. 検索や絞り込みを入れる
+4. JPA + H2 で DB 化する
+5. PostgreSQL に切り替える
+6. Docker / profile / Flyway で DB 運用に近づける
+7. 検索や絞り込みを入れる
 
 ## 補足
 
@@ -140,3 +162,4 @@
 2. `LibraryService` を見て Spring 版でも業務ルールの中心が同じだと理解する
 3. `LibraryPageController` と `templates/library.html` を見て MVC の流れを理解する
 4. そのあと `Repository` を DB に変えると何が増えるかを学ぶ
+5. H2 で JPA の基本を押さえてから、PostgreSQL や Flyway に進む
